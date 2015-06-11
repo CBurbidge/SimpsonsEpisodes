@@ -12,9 +12,8 @@ let currentNumberOfSeries = 27
 let getSeasonFileName = fun (seasonNumber: int) -> 
     Path.Combine( dataDirectory, "Season_" + seasonNumber.ToString() + ".html")
 
-[<EntryPoint>]
-let main argv = 
-    // Download files to disk
+let downloadSeasonFilesToDisk =
+    Console.WriteLine("Downloading Files if need be")
     for seriesNumber in 1 .. currentNumberOfSeries do
         if File.Exists(getSeasonFileName(seriesNumber)) then
             Console.WriteLine("File exists at:" + getSeasonFileName(seriesNumber))
@@ -24,6 +23,13 @@ let main argv =
             let seasonHtml = HtmlDocument.Load(seasonUrl)
             File.WriteAllLines(getSeasonFileName(seriesNumber), [seasonHtml.ToString()])
             Console.WriteLine("Downloaded to file: " + getSeasonFileName(seriesNumber))
+
+[<EntryPoint>]
+let main argv = 
+    
+    downloadSeasonFilesToDisk
+
+
 //    let episodes = HtmlDocument.Load(episodesUrl)
 //    let trElements = episodes.Descendants["tr"]
 //    // For some reason the episodes are in table rows with a 'vevent' class
