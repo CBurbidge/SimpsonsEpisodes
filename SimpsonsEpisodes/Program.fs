@@ -57,8 +57,12 @@ let main argv =
 
     for seriesNumber in 1 .. currentNumberOfSeries do
         let episodeTableHtml = getEpisodeTableHtmlForSeason seriesNumber
-
         // Episode tables have a header then pairs of informations and descriptions.
+        let trElements = episodeTableHtml.Descendants["tr"]
+        
+        
+
+        let thing = 0
 
         
         Console.WriteLine("Loaded File")
