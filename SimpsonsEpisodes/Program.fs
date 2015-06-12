@@ -3,10 +3,13 @@ open System.IO
 open FSharp.Configuration
 open FSharp.Data
 
-//type Settings = AppSettings<"app.config">
-
-let dataDirectory = "F:\Repos\SimpsonsEpisodes\Data"
+let debugDir = Environment.CurrentDirectory
+let binDir = Directory.GetParent(debugDir)
+let simpsonsEpisodesCodeDir = Directory.GetParent(binDir.FullName)
+let simpsonsEpisodesRepoDir = Directory.GetParent(simpsonsEpisodesCodeDir.FullName)
+let dataDirectory = Path.Combine(simpsonsEpisodesRepoDir.FullName, "Data")
 let seasonsDataDirectory = Path.Combine(dataDirectory, "Seasons")
+
 let episodeUrlStart = "http://en.wikipedia.org/wiki/The_Simpsons_(season_"
 let currentNumberOfSeries = 26
 
