@@ -60,7 +60,26 @@ let main argv =
         // Episode tables have a header then pairs of informations and descriptions.
         let trElements = episodeTableHtml.Descendants["tr"]
         
+        let header = trElements |> Seq.head
+        let infoAndDescriptions =  trElements |> Seq.filter (fun (a) -> a <> header )
+        let infosAndDescriptionsList = infoAndDescriptions |> Seq.toList
+        let numberOfInfosAndDecriptions = (List.length infosAndDescriptionsList)
+        if numberOfInfosAndDecriptions % 2 <> 0 then
+            raise (Exception("This should be an even number!"))
         
+        let numberOfEpisodes = numberOfInfosAndDecriptions / 2
+
+        for episodeNumber in 0 .. (numberOfEpisodes - 1) do
+            let infoElement = infosAndDescriptionsList.[episodeNumber * 2]
+            if infoElement.HasAttribute("class", "vevent") = false then
+                raise(Exception("This is not an info row when it should be!"))
+
+            let descriptionRowElement = infosAndDescriptionsList.[episodeNumber * 2 + 1]
+            let descriptionElement = descriptionRowElement.Descendants("td") |> Seq.head
+            if descriptionElement.HasAttribute("class", "description") = false then
+                raise(Exception("This is not a description row when it should be!"))
+
+            0 |> ignore
 
         let thing = 0
 
