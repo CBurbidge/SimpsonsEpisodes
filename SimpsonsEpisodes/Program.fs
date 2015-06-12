@@ -35,26 +35,31 @@ let downloadSeasonFilesToDisk =
             File.WriteAllLines(seasonFileName, [seasonHtml.ToString()])
             Console.WriteLine("Downloaded to file: " + seasonFileName)
 
+let getEpisodeTableHtmlForSeason seasonNumber: HtmlNode =
+    let seasonHtml = HtmlDocument.Load(getSeasonFileName(seasonNumber))
+    let tables = seasonHtml.Descendants["table"]
+    // Episodes are shown in a table with the classes wikitable plainrowheaders for some reason
+    // Season 27 has two tables like this, but it isn't out yet so not going to worry about it 
+    let episodeTableClass = "wikitable plainrowheaders"
+    let episodeTables = 
+        tables
+        |> Seq.filter (fun (t: HtmlNode) -> 
+            t.HasClass(episodeTableClass)        
+        )
+    if Seq.length episodeTables <> 1 then
+        raise (new Exception("Can't find a episodes table in the season"))
+    Seq.head episodeTables
+
 [<EntryPoint>]
 let main argv = 
     
     downloadSeasonFilesToDisk
 
     for seriesNumber in 1 .. currentNumberOfSeries do
-        let seasonHtml = HtmlDocument.Load(getSeasonFileName(seriesNumber))
-        let tables = seasonHtml.Descendants["table"]
-        // Episodes are shown in a table with the classes wikitable plainrowheaders for some reason
-        // Season 27 has two tables like this, but it isn't out yet so not going to worry about it 
-        let episodeTableClass = "wikitable plainrowheaders"
-        let episodeTables = 
-            tables
-            |> Seq.filter (fun (t: HtmlNode) -> 
-                t.HasClass(episodeTableClass)        
-            )
-        if Seq.length episodeTables <> 1 then
-            raise (new Exception("Can't find a episodes table in the season"))
+        let episodeTableHtml = getEpisodeTableHtmlForSeason seriesNumber
 
-        let episodeTable =  Seq.head episodeTables        
+        // Episode tables have a header then pairs of informations and descriptions.
+
         
         Console.WriteLine("Loaded File")
         
