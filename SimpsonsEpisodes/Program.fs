@@ -50,11 +50,17 @@ let getEpisodeTableHtmlForSeason seasonNumber: HtmlNode =
         raise (new Exception("Can't find a episodes table in the season"))
     Seq.head episodeTables
 
+type EpisodeInfo(seasonNumber: int, episodeNumber:int, wikiUrlSuffix:string, description: HtmlNode) =
+    member this.seasonNumber = seasonNumber
+    member this.episodeNumber = episodeNumber
+    member this.wikiUrlSuffix = wikiUrlSuffix
+    member this.description = description
+
 [<EntryPoint>]
 let main argv = 
     
     downloadSeasonFilesToDisk
-
+    
     for seriesNumber in 1 .. currentNumberOfSeries do
         let episodeTableHtml = getEpisodeTableHtmlForSeason seriesNumber
         // Episode tables have a header then pairs of informations and descriptions.
@@ -74,10 +80,18 @@ let main argv =
             if infoElement.HasAttribute("class", "vevent") = false then
                 raise(Exception("This is not an info row when it should be!"))
 
+            let episodeWikiUrlAnchor = 
+                infoElement.Elements().[2].Descendants["a"]
+                |> Seq.head
+            let episodeWikiHref = episodeWikiUrlAnchor.AttributeValue("href")
+            
             let descriptionRowElement = infosAndDescriptionsList.[episodeNumber * 2 + 1]
             let descriptionElement = descriptionRowElement.Descendants("td") |> Seq.head
             if descriptionElement.HasAttribute("class", "description") = false then
                 raise(Exception("This is not a description row when it should be!"))
+            let descText = descriptionElement.InnerText
+            let descString = descriptionElement.ToString()
+            let episodeInfo = EpisodeInfo(seriesNumber, episodeNumber + 1, episodeWikiHref, descriptionElement)
 
             0 |> ignore
 
