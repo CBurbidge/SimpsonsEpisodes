@@ -10,7 +10,8 @@ let simpsonsEpisodesRepoDir = Directory.GetParent(simpsonsEpisodesCodeDir.FullNa
 let dataDirectory = Path.Combine(simpsonsEpisodesRepoDir.FullName, "Data")
 let seasonsDataDirectory = Path.Combine(dataDirectory, "Seasons")
 
-let episodeUrlStart = "http://en.wikipedia.org/wiki/The_Simpsons_(season_"
+let wikiStart = "http://en.wikipedia.org/"
+let episodeUrlStart = wikiStart + "wiki/The_Simpsons_(season_"
 let currentNumberOfSeries = 26
 
 let getSeasonFileName = fun (seasonNumber: int) -> 
@@ -56,6 +57,29 @@ type EpisodeInfo(seasonNumber: int, episodeNumber:int, wikiUrlSuffix:string, des
     member this.wikiUrlSuffix = wikiUrlSuffix
     member this.description = description
 
+
+let extractEpisodeInformation(seasonNumber: int, episodeNumber: int, infosAndDescriptionsList: List<HtmlNode>) =
+    let infoElement = infosAndDescriptionsList.[episodeNumber * 2]
+    if infoElement.HasAttribute("class", "vevent") = false then
+        raise(Exception("This is not an info row when it should be!"))
+
+    let episodeWikiUrlAnchor = 
+        infoElement.Elements().[2].Descendants["a"]
+        |> Seq.head
+    let episodeWikiHref = episodeWikiUrlAnchor.AttributeValue("href")
+            
+    let descriptionRowElement = infosAndDescriptionsList.[episodeNumber * 2 + 1]
+    let descriptionElement = descriptionRowElement.Descendants("td") |> Seq.head
+    if descriptionElement.HasAttribute("class", "description") = false then
+        raise(Exception("This is not a description row when it should be!"))
+    let descText = descriptionElement.InnerText
+    let descString = descriptionElement.ToString()
+    EpisodeInfo(seasonNumber, episodeNumber + 1, episodeWikiHref, descriptionElement)
+
+
+type Season(episodeInfos: seq<EpisodeInfo>) =
+    member this.episodeInfos = episodeInfos
+
 [<EntryPoint>]
 let main argv = 
     
@@ -75,23 +99,11 @@ let main argv =
         
         let numberOfEpisodes = numberOfInfosAndDecriptions / 2
 
-        for episodeNumber in 0 .. (numberOfEpisodes - 1) do
-            let infoElement = infosAndDescriptionsList.[episodeNumber * 2]
-            if infoElement.HasAttribute("class", "vevent") = false then
-                raise(Exception("This is not an info row when it should be!"))
-
-            let episodeWikiUrlAnchor = 
-                infoElement.Elements().[2].Descendants["a"]
-                |> Seq.head
-            let episodeWikiHref = episodeWikiUrlAnchor.AttributeValue("href")
+        let episodes = [| for episodeNumber in 0 .. (numberOfEpisodes - 1) do 
+                yield (extractEpisodeInformation(seriesNumber, episodeNumber, infosAndDescriptionsList)) |]
+        
+        
             
-            let descriptionRowElement = infosAndDescriptionsList.[episodeNumber * 2 + 1]
-            let descriptionElement = descriptionRowElement.Descendants("td") |> Seq.head
-            if descriptionElement.HasAttribute("class", "description") = false then
-                raise(Exception("This is not a description row when it should be!"))
-            let descText = descriptionElement.InnerText
-            let descString = descriptionElement.ToString()
-            let episodeInfo = EpisodeInfo(seriesNumber, episodeNumber + 1, episodeWikiHref, descriptionElement)
 
             0 |> ignore
 
