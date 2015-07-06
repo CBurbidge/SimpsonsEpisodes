@@ -57,35 +57,32 @@ type EpisodeInfo(seasonNumber: int, episodeNumber:int, wikiUrlSuffix:string, des
     member this.wikiUrlSuffix = wikiUrlSuffix
     member this.description = description
 
-
-let extractEpisodeInformation(seasonNumber: int, episodeNumber: int, infosAndDescriptionsList: List<HtmlNode>) =
-    let infoElement = infosAndDescriptionsList.[episodeNumber * 2]
-    if infoElement.HasAttribute("class", "vevent") = false then
-        raise(Exception("This is not an info row when it should be!"))
-
-    let episodeWikiUrlAnchor = 
-        infoElement.Elements().[2].Descendants["a"]
-        |> Seq.head
-    let episodeWikiHref = episodeWikiUrlAnchor.AttributeValue("href")
-            
-    let descriptionRowElement = infosAndDescriptionsList.[episodeNumber * 2 + 1]
-    let descriptionElement = descriptionRowElement.Descendants("td") |> Seq.head
-    if descriptionElement.HasAttribute("class", "description") = false then
-        raise(Exception("This is not a description row when it should be!"))
-    let descText = descriptionElement.InnerText
-    let descString = descriptionElement.ToString()
-    EpisodeInfo(seasonNumber, episodeNumber + 1, episodeWikiHref, descriptionElement)
-
-
 type Season(episodeInfos: seq<EpisodeInfo>) =
     member this.episodeInfos = episodeInfos
 
-[<EntryPoint>]
-let main argv = 
-    
-    downloadSeasonFilesToDisk
-    
-    for seriesNumber in 1 .. currentNumberOfSeries do
+let rec extractEpisodes(seasonNumber: int, numberOfEpisodes: int, infosAndDescriptionsList: List<HtmlNode>, episodes: seq<EpisodeInfo>) =
+    if numberOfEpisodes <> 0 then
+        let infoElement = infosAndDescriptionsList.[numberOfEpisodes * 2 - 2]
+        if infoElement.HasAttribute("class", "vevent") = false then
+            raise(Exception("This is not an info row when it should be!"))
+
+        let episodeWikiUrlAnchor = 
+            infoElement.Elements().[2].Descendants["a"]
+            |> Seq.head
+        let episodeWikiHref = episodeWikiUrlAnchor.AttributeValue("href")
+            
+        let descriptionRowElement = infosAndDescriptionsList.[numberOfEpisodes * 2 - 1]
+        let descriptionElement = descriptionRowElement.Descendants("td") |> Seq.head
+        if descriptionElement.HasAttribute("class", "description") = false then
+            raise(Exception("This is not a description row when it should be!"))
+        let descText = descriptionElement.InnerText
+        let descString = descriptionElement.ToString()
+        let appendedEpisodes = Seq.append episodes  [EpisodeInfo(seasonNumber, numberOfEpisodes, episodeWikiHref, descriptionElement)]
+        let oneLessThanInput = numberOfEpisodes - 1
+        extractEpisodes(seasonNumber, oneLessThanInput, infosAndDescriptionsList, appendedEpisodes)
+
+let rec getSeasonEpisodesRec(seriesNumber: int, episodes: seq<EpisodeInfo>) =
+    if seriesNumber <> 0 then 
         let episodeTableHtml = getEpisodeTableHtmlForSeason seriesNumber
         // Episode tables have a header then pairs of informations and descriptions.
         let trElements = episodeTableHtml.Descendants["tr"]
@@ -98,19 +95,42 @@ let main argv =
             raise (Exception("This should be an even number!"))
         
         let numberOfEpisodes = numberOfInfosAndDecriptions / 2
+        let oneLessThanSeason = seriesNumber - 1
+        extractEpisodes(seriesNumber, numberOfEpisodes, infosAndDescriptionsList, episodes)
+        getSeasonEpisodesRec(oneLessThanSeason, episodes)
 
-        let episodes = [| for episodeNumber in 0 .. (numberOfEpisodes - 1) do 
-                yield (extractEpisodeInformation(seriesNumber, episodeNumber, infosAndDescriptionsList)) |]
-        
-        
-            
 
-            0 |> ignore
+[<EntryPoint>]
+let main argv = 
+    
+    downloadSeasonFilesToDisk
+    
+    let mutable allEpisodes = []
+    getSeasonEpisodesRec(currentNumberOfSeries, allEpisodes)
 
-        let thing = 0
+    let product = 
+        let rec outer(n1) = 
+            let rec nested(n2) = 
+                if n2 > 4 then [] else (n1 * n2)::(nested(n2 + 1))
+            if n1 > 4 then [] else nested(2) @ outer(n1 + 1)
+        outer(2)
 
-        
-        Console.WriteLine("Loaded File")
+//    for seriesNumber in 1 .. currentNumberOfSeries do
+//        let episodeTableHtml = getEpisodeTableHtmlForSeason seriesNumber
+//        // Episode tables have a header then pairs of informations and descriptions.
+//        let trElements = episodeTableHtml.Descendants["tr"]
+//        
+//        let header = trElements |> Seq.head
+//        let infoAndDescriptions =  trElements |> Seq.filter (fun (a) -> a <> header )
+//        let infosAndDescriptionsList = infoAndDescriptions |> Seq.toList
+//        let numberOfInfosAndDecriptions = (List.length infosAndDescriptionsList)
+//        if numberOfInfosAndDecriptions % 2 <> 0 then
+//            raise (Exception("This should be an even number!"))
+//        
+//        let numberOfEpisodes = numberOfInfosAndDecriptions / 2
+
+//        let episodes = [| for episodeNumber in 0 .. (numberOfEpisodes - 1) do 
+//                yield (extractEpisodeInformation(seriesNumber, episodeNumber, infosAndDescriptionsList)) |]
         
     Console.ReadKey() |> ignore
     0 // return an integer exit code
