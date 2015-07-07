@@ -1,5 +1,6 @@
 ﻿open System
 open System.IO
+open System.Web
 open FSharp.Configuration
 open FSharp.Data
 
@@ -9,9 +10,10 @@ let simpsonsEpisodesCodeDir = Directory.GetParent(binDir.FullName)
 let simpsonsEpisodesRepoDir = Directory.GetParent(simpsonsEpisodesCodeDir.FullName)
 let dataDirectory = Path.Combine(simpsonsEpisodesRepoDir.FullName, "Data")
 let seasonsDataDirectory = Path.Combine(dataDirectory, "Seasons")
+let episodesDataDirectory = Path.Combine(dataDirectory, "Episodes")
 
-let wikiStart = "http://en.wikipedia.org/"
-let episodeUrlStart = wikiStart + "wiki/The_Simpsons_(season_"
+let wikiStart = "http://en.wikipedia.org"
+let episodeUrlStart = wikiStart + "/wiki/The_Simpsons_(season_"
 let currentNumberOfSeries = 26
 
 let getSeasonFileName = fun (seasonNumber: int) -> 
@@ -57,60 +59,81 @@ type EpisodeInfo(seasonNumber: int, episodeNumber:int, wikiUrlSuffix:string, des
     member this.wikiUrlSuffix = wikiUrlSuffix
     member this.description = description
 
-type Season(episodeInfos: seq<EpisodeInfo>) =
-    member this.episodeInfos = episodeInfos
+let getAllEpisodes() :EpisodeInfo list = 
+    let rec getSeasonEpisodesRec(seriesNumber: int, acc): EpisodeInfo list =
+        let rec extractEpisodes(seasonNumber: int, numberOfEpisodes: int, infosAndDescriptionsList: List<HtmlNode>, acc: EpisodeInfo list): EpisodeInfo list =
+            if numberOfEpisodes = 0 then
+                acc
+            else
+                let infoElement = infosAndDescriptionsList.[numberOfEpisodes * 2 - 2]
+                if infoElement.HasAttribute("class", "vevent") = false then
+                    raise(Exception("This is not an info row when it should be!"))
+
+                let episodeWikiUrlAnchor = 
+                    infoElement.Elements().[2].Descendants["a"]
+                    |> Seq.head
+                let episodeWikiHref = episodeWikiUrlAnchor.AttributeValue("href")
+            
+                let descriptionRowElement = infosAndDescriptionsList.[numberOfEpisodes * 2 - 1]
+                let descriptionElement = descriptionRowElement.Descendants("td") |> Seq.head
+                if descriptionElement.HasAttribute("class", "description") = false then
+                    raise(Exception("This is not a description row when it should be!"))
+                let descText = descriptionElement.InnerText
+                let descString = descriptionElement.ToString()
+                        
+                let oneLessThanInput = numberOfEpisodes - 1
+                extractEpisodes(seasonNumber, oneLessThanInput, infosAndDescriptionsList, (EpisodeInfo(seasonNumber, numberOfEpisodes, episodeWikiHref, descriptionElement) :: acc))
+        if seriesNumber = 0 then
+            acc
+        else 
+            let episodeTableHtml = getEpisodeTableHtmlForSeason seriesNumber
+            // Episode tables have a header then pairs of informations and descriptions.
+            let trElements = episodeTableHtml.Descendants["tr"]
+        
+            let header = trElements |> Seq.head
+            let infoAndDescriptions =  trElements |> Seq.filter (fun (a) -> a <> header )
+            let infosAndDescriptionsList = infoAndDescriptions |> Seq.toList
+            let numberOfInfosAndDecriptions = (List.length infosAndDescriptionsList)
+            if numberOfInfosAndDecriptions % 2 <> 0 then
+                raise (Exception("This should be an even number!"))
+        
+            let numberOfEpisodes = numberOfInfosAndDecriptions / 2
+            let oneLessThanSeason = seriesNumber - 1
+                
+            getSeasonEpisodesRec(oneLessThanSeason, extractEpisodes(seriesNumber, numberOfEpisodes, infosAndDescriptionsList, acc))
+                
+    getSeasonEpisodesRec(currentNumberOfSeries, [])
+
+let getEpisodeFileName (seriesNumber, episodeNumber) : string =
+    Path.Combine(episodesDataDirectory, "S" + seriesNumber.ToString() + "_E" + episodeNumber.ToString() + ".html")
+
+let ensureThatEpisodeFilesExist (allEpisodes: EpisodeInfo list) = 
+    if Directory.Exists(episodesDataDirectory) = false then
+        Directory.CreateDirectory(episodesDataDirectory) |> ignore
+
+    for episode in allEpisodes do
+        let decodedUrlSuffix: string = HttpUtility.UrlDecode(episode.wikiUrlSuffix)
+        let downloadUrl = wikiStart + decodedUrlSuffix
+        Console.Write(downloadUrl)
+        let fileName:string = getEpisodeFileName(episode.seasonNumber, episode.episodeNumber)
+        if File.Exists(fileName) = false then
+            Console.WriteLine("File doesnt exist " + fileName)
+            let html = HtmlDocument.Load(downloadUrl)
+            File.WriteAllLines(fileName, [html.ToString()])
+        else
+            Console.WriteLine("File exists" + fileName)
+        0 |> ignore
+    
 
 [<EntryPoint>]
 let main argv = 
     
     downloadSeasonFilesToDisk
     
-    let allEpisodes: EpisodeInfo list =
-        let rec getSeasonEpisodesRec(seriesNumber: int, acc): EpisodeInfo list =
-            let rec extractEpisodes(seasonNumber: int, numberOfEpisodes: int, infosAndDescriptionsList: List<HtmlNode>, acc: EpisodeInfo list): EpisodeInfo list =
-                    if numberOfEpisodes = 0 then
-                        acc
-                    else
-                        let infoElement = infosAndDescriptionsList.[numberOfEpisodes * 2 - 2]
-                        if infoElement.HasAttribute("class", "vevent") = false then
-                            raise(Exception("This is not an info row when it should be!"))
-
-                        let episodeWikiUrlAnchor = 
-                            infoElement.Elements().[2].Descendants["a"]
-                            |> Seq.head
-                        let episodeWikiHref = episodeWikiUrlAnchor.AttributeValue("href")
-            
-                        let descriptionRowElement = infosAndDescriptionsList.[numberOfEpisodes * 2 - 1]
-                        let descriptionElement = descriptionRowElement.Descendants("td") |> Seq.head
-                        if descriptionElement.HasAttribute("class", "description") = false then
-                            raise(Exception("This is not a description row when it should be!"))
-                        let descText = descriptionElement.InnerText
-                        let descString = descriptionElement.ToString()
-                        
-                        let oneLessThanInput = numberOfEpisodes - 1
-                        extractEpisodes(seasonNumber, oneLessThanInput, infosAndDescriptionsList, (EpisodeInfo(seasonNumber, numberOfEpisodes, episodeWikiHref, descriptionElement) :: acc))
-            if seriesNumber = 0 then
-                acc
-            else 
-                let episodeTableHtml = getEpisodeTableHtmlForSeason seriesNumber
-                // Episode tables have a header then pairs of informations and descriptions.
-                let trElements = episodeTableHtml.Descendants["tr"]
-        
-                let header = trElements |> Seq.head
-                let infoAndDescriptions =  trElements |> Seq.filter (fun (a) -> a <> header )
-                let infosAndDescriptionsList = infoAndDescriptions |> Seq.toList
-                let numberOfInfosAndDecriptions = (List.length infosAndDescriptionsList)
-                if numberOfInfosAndDecriptions % 2 <> 0 then
-                    raise (Exception("This should be an even number!"))
-        
-                let numberOfEpisodes = numberOfInfosAndDecriptions / 2
-                let oneLessThanSeason = seriesNumber - 1
-                
-                getSeasonEpisodesRec(oneLessThanSeason, extractEpisodes(seriesNumber, numberOfEpisodes, infosAndDescriptionsList, acc))
-                
-        getSeasonEpisodesRec(currentNumberOfSeries, [])
-
-    for episode in allEpisodes do
-        Console.WriteLine(episode.description)
+    let allEpisodes: EpisodeInfo list = getAllEpisodes()
+    
+    ensureThatEpisodeFilesExist allEpisodes
+    
     Console.ReadKey() |> ignore
     0 // return an integer exit code
+    
