@@ -105,18 +105,11 @@ let main argv =
         
                 let numberOfEpisodes = numberOfInfosAndDecriptions / 2
                 let oneLessThanSeason = seriesNumber - 1
-                let thing = extractEpisodes(seriesNumber, numberOfEpisodes, infosAndDescriptionsList, acc)
-                getSeasonEpisodesRec(oneLessThanSeason, thing @ acc)
+                
+                getSeasonEpisodesRec(oneLessThanSeason, extractEpisodes(seriesNumber, numberOfEpisodes, infosAndDescriptionsList, acc))
                 
         getSeasonEpisodesRec(currentNumberOfSeries, [])
 
-
-//    let product = 
-//      let rec outer n1 acc = 
-//        let rec nested n2 acc = 
-//          if n2 > 4 then acc else nested (n2 + 1) ((n1 * n2)::acc)
-//        if n1 > 4 then acc else outer (n1 + 1) (nested 2 acc)
-//      outer 2 [] |> List.rev
     for episode in allEpisodes do
         Console.WriteLine(episode.description)
     Console.ReadKey() |> ignore
