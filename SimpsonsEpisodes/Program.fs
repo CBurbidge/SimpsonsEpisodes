@@ -60,19 +60,14 @@ type EpisodeInfo(seasonNumber: int, episodeNumber:int, wikiUrlSuffix:string, des
 type Season(episodeInfos: seq<EpisodeInfo>) =
     member this.episodeInfos = episodeInfos
 
-
-
-
-
-
 [<EntryPoint>]
 let main argv = 
     
     downloadSeasonFilesToDisk
     
-    let allEpisodes =
-        let rec getSeasonEpisodesRec(seriesNumber: int, acc) =
-            let rec extractEpisodes(seasonNumber: int, numberOfEpisodes: int, infosAndDescriptionsList: List<HtmlNode>, acc) =
+    let allEpisodes: EpisodeInfo list =
+        let rec getSeasonEpisodesRec(seriesNumber: int, acc): EpisodeInfo list =
+            let rec extractEpisodes(seasonNumber: int, numberOfEpisodes: int, infosAndDescriptionsList: List<HtmlNode>, acc: EpisodeInfo list): EpisodeInfo list =
                     if numberOfEpisodes = 0 then
                         acc
                     else
@@ -91,10 +86,9 @@ let main argv =
                             raise(Exception("This is not a description row when it should be!"))
                         let descText = descriptionElement.InnerText
                         let descString = descriptionElement.ToString()
-                        let newEpisode = EpisodeInfo(seasonNumber, numberOfEpisodes, episodeWikiHref, descriptionElement)
                         
                         let oneLessThanInput = numberOfEpisodes - 1
-                        extractEpisodes(seasonNumber, oneLessThanInput, infosAndDescriptionsList, (acc :: newEpisode))
+                        extractEpisodes(seasonNumber, oneLessThanInput, infosAndDescriptionsList, (EpisodeInfo(seasonNumber, numberOfEpisodes, episodeWikiHref, descriptionElement) :: acc))
             if seriesNumber = 0 then
                 acc
             else 
@@ -111,9 +105,8 @@ let main argv =
         
                 let numberOfEpisodes = numberOfInfosAndDecriptions / 2
                 let oneLessThanSeason = seriesNumber - 1
-                
-                    
-                getSeasonEpisodesRec(oneLessThanSeason, acc)
+                let thing = extractEpisodes(seriesNumber, numberOfEpisodes, infosAndDescriptionsList, acc)
+                getSeasonEpisodesRec(oneLessThanSeason, thing @ acc)
                 
         getSeasonEpisodesRec(currentNumberOfSeries, [])
 
@@ -124,6 +117,7 @@ let main argv =
 //          if n2 > 4 then acc else nested (n2 + 1) ((n1 * n2)::acc)
 //        if n1 > 4 then acc else outer (n1 + 1) (nested 2 acc)
 //      outer 2 [] |> List.rev
-
+    for episode in allEpisodes do
+        Console.WriteLine(episode.description)
     Console.ReadKey() |> ignore
     0 // return an integer exit code
