@@ -72,22 +72,10 @@ let main argv =
     
     let allEpisodes =
         let rec getSeasonEpisodesRec(seriesNumber: int, acc) =
-            if seriesNumber <> 0 then 
-                let episodeTableHtml = getEpisodeTableHtmlForSeason seriesNumber
-                // Episode tables have a header then pairs of informations and descriptions.
-                let trElements = episodeTableHtml.Descendants["tr"]
-        
-                let header = trElements |> Seq.head
-                let infoAndDescriptions =  trElements |> Seq.filter (fun (a) -> a <> header )
-                let infosAndDescriptionsList = infoAndDescriptions |> Seq.toList
-                let numberOfInfosAndDecriptions = (List.length infosAndDescriptionsList)
-                if numberOfInfosAndDecriptions % 2 <> 0 then
-                    raise (Exception("This should be an even number!"))
-        
-                let numberOfEpisodes = numberOfInfosAndDecriptions / 2
-                let oneLessThanSeason = seriesNumber - 1
-                let rec extractEpisodes(seasonNumber: int, numberOfEpisodes: int, infosAndDescriptionsList: List<HtmlNode>, acc) =
-                    if numberOfEpisodes <> 0 then
+            let rec extractEpisodes(seasonNumber: int, numberOfEpisodes: int, infosAndDescriptionsList: List<HtmlNode>, acc) =
+                    if numberOfEpisodes = 0 then
+                        acc
+                    else
                         let infoElement = infosAndDescriptionsList.[numberOfEpisodes * 2 - 2]
                         if infoElement.HasAttribute("class", "vevent") = false then
                             raise(Exception("This is not an info row when it should be!"))
@@ -106,13 +94,26 @@ let main argv =
                         let newEpisode = EpisodeInfo(seasonNumber, numberOfEpisodes, episodeWikiHref, descriptionElement)
                         
                         let oneLessThanInput = numberOfEpisodes - 1
-                        let thing = (acc :: newEpisode)
-                        extractEpisodes(seasonNumber, oneLessThanInput, infosAndDescriptionsList, thing)
-                    else
-                        acc
+                        extractEpisodes(seasonNumber, oneLessThanInput, infosAndDescriptionsList, (acc :: newEpisode))
+            if seriesNumber = 0 then
+                acc
+            else 
+                let episodeTableHtml = getEpisodeTableHtmlForSeason seriesNumber
+                // Episode tables have a header then pairs of informations and descriptions.
+                let trElements = episodeTableHtml.Descendants["tr"]
+        
+                let header = trElements |> Seq.head
+                let infoAndDescriptions =  trElements |> Seq.filter (fun (a) -> a <> header )
+                let infosAndDescriptionsList = infoAndDescriptions |> Seq.toList
+                let numberOfInfosAndDecriptions = (List.length infosAndDescriptionsList)
+                if numberOfInfosAndDecriptions % 2 <> 0 then
+                    raise (Exception("This should be an even number!"))
+        
+                let numberOfEpisodes = numberOfInfosAndDecriptions / 2
+                let oneLessThanSeason = seriesNumber - 1
+                
+                    
                 getSeasonEpisodesRec(oneLessThanSeason, acc)
-                else
-                    acc
                 
         getSeasonEpisodesRec(currentNumberOfSeries, [])
 
