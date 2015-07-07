@@ -16,6 +16,8 @@ let wikiStart = "http://en.wikipedia.org"
 let episodeUrlStart = wikiStart + "/wiki/The_Simpsons_(season_"
 let currentNumberOfSeries = 26
 
+let forceDownload = false
+
 let getSeasonFileName = fun (seasonNumber: int) -> 
     Path.Combine( seasonsDataDirectory, "Season_" + seasonNumber.ToString() + ".html")
 
@@ -29,14 +31,14 @@ let downloadSeasonFilesToDisk =
     Console.WriteLine("Downloading Files if need be")
     for seriesNumber in 1 .. currentNumberOfSeries do
         let seasonFileName = getSeasonFileName(seriesNumber)
-        if File.Exists(getSeasonFileName(seriesNumber)) then
-            Console.WriteLine("File exists at:" + seasonFileName)
-        else
+        if File.Exists(getSeasonFileName(seriesNumber)) = false || forceDownload then
             let seasonUrl = episodeUrlStart + seriesNumber.ToString() + ")"
             Console.WriteLine("Url for season is: " + seasonUrl)
             let seasonHtml = HtmlDocument.Load(seasonUrl)
             File.WriteAllLines(seasonFileName, [seasonHtml.ToString()])
             Console.WriteLine("Downloaded to file: " + seasonFileName)
+        else
+            Console.WriteLine("File exists at:" + seasonFileName)
 
 let getEpisodeTableHtmlForSeason seasonNumber: HtmlNode =
     let seasonHtml = HtmlDocument.Load(getSeasonFileName(seasonNumber))
@@ -116,7 +118,7 @@ let ensureThatEpisodeFilesExist (allEpisodes: EpisodeInfo list) =
         let downloadUrl = wikiStart + decodedUrlSuffix
         Console.Write(downloadUrl)
         let fileName:string = getEpisodeFileName(episode.seasonNumber, episode.episodeNumber)
-        if File.Exists(fileName) = false then
+        if File.Exists(fileName) = false || forceDownload then
             Console.WriteLine("File doesnt exist " + fileName)
             let html = HtmlDocument.Load(downloadUrl)
             File.WriteAllLines(fileName, [html.ToString()])
