@@ -5,6 +5,11 @@ VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SimpsonsEpisodes", "SimpsonsEpisodes\SimpsonsEpisodes.fsproj", "{903A7AE7-5DE2-4F70-851B-03FF2FE21966}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TestData", "TestData", "{49F44C67-FEC0-4907-88FF-233471208C12}"
+	ProjectSection(SolutionItems) = preProject
+		Data\TestData\BasicParsingTest.html = Data\TestData\BasicParsingTest.html
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

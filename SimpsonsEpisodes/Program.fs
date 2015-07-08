@@ -126,6 +126,15 @@ let ensureThatEpisodeFilesExist (allEpisodes: EpisodeSummaryInfo list) =
             Console.WriteLine("File exists" + fileName)
         0 |> ignore
     
+type Episode(summary: EpisodeSummaryInfo, description: string) =
+    member this.summary = summary
+    member this.description = description
+
+let parseEpisodeFile (summary:EpisodeSummaryInfo, fileLocationGettingFunc): Episode =
+    let fileLocation:string = fileLocationGettingFunc(summary.seasonNumber, summary.episodeNumber)
+    
+    Episode(summary, "")
+
 
 [<EntryPoint>]
 let main argv = 
