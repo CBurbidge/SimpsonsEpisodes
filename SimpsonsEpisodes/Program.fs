@@ -55,15 +55,15 @@ let getEpisodeTableHtmlForSeason seasonNumber: HtmlNode =
         raise (new Exception("Can't find a episodes table in the season"))
     Seq.head episodeTables
 
-type EpisodeInfo(seasonNumber: int, episodeNumber:int, wikiUrlSuffix:string, description: HtmlNode) =
+type EpisodeSummaryInfo(seasonNumber: int, episodeNumber:int, wikiUrlSuffix:string, description: HtmlNode) =
     member this.seasonNumber = seasonNumber
     member this.episodeNumber = episodeNumber
     member this.wikiUrlSuffix = wikiUrlSuffix
     member this.description = description
 
-let getAllEpisodes() :EpisodeInfo list = 
-    let rec getSeasonEpisodesRec(seriesNumber: int, acc): EpisodeInfo list =
-        let rec extractEpisodes(seasonNumber: int, numberOfEpisodes: int, infosAndDescriptionsList: List<HtmlNode>, acc: EpisodeInfo list): EpisodeInfo list =
+let getAllEpisodes() :EpisodeSummaryInfo list = 
+    let rec getSeasonEpisodesRec(seriesNumber: int, acc): EpisodeSummaryInfo list =
+        let rec extractEpisodes(seasonNumber: int, numberOfEpisodes: int, infosAndDescriptionsList: List<HtmlNode>, acc: EpisodeSummaryInfo list): EpisodeSummaryInfo list =
             if numberOfEpisodes = 0 then
                 acc
             else
@@ -84,7 +84,7 @@ let getAllEpisodes() :EpisodeInfo list =
                 let descString = descriptionElement.ToString()
                         
                 let oneLessThanInput = numberOfEpisodes - 1
-                extractEpisodes(seasonNumber, oneLessThanInput, infosAndDescriptionsList, (EpisodeInfo(seasonNumber, numberOfEpisodes, episodeWikiHref, descriptionElement) :: acc))
+                extractEpisodes(seasonNumber, oneLessThanInput, infosAndDescriptionsList, (EpisodeSummaryInfo(seasonNumber, numberOfEpisodes, episodeWikiHref, descriptionElement) :: acc))
         if seriesNumber = 0 then
             acc
         else 
@@ -109,7 +109,7 @@ let getAllEpisodes() :EpisodeInfo list =
 let getEpisodeFileName (seriesNumber, episodeNumber) : string =
     Path.Combine(episodesDataDirectory, "S" + seriesNumber.ToString() + "_E" + episodeNumber.ToString() + ".html")
 
-let ensureThatEpisodeFilesExist (allEpisodes: EpisodeInfo list) = 
+let ensureThatEpisodeFilesExist (allEpisodes: EpisodeSummaryInfo list) = 
     if Directory.Exists(episodesDataDirectory) = false then
         Directory.CreateDirectory(episodesDataDirectory) |> ignore
 
@@ -132,7 +132,7 @@ let main argv =
     
     downloadSeasonFilesToDisk
     
-    let allEpisodes: EpisodeInfo list = getAllEpisodes()
+    let allEpisodes: EpisodeSummaryInfo list = getAllEpisodes()
     
     ensureThatEpisodeFilesExist allEpisodes
     
