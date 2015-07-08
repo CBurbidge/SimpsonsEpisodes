@@ -134,7 +134,19 @@ type Episode(summaryInfo: EpisodeSummaryInfo, summary: string, plot: string) =
     member this.plot = plot
 
 let parseEpisodeFile (summary:EpisodeSummaryInfo, fileLocationGettingFunc): Episode =
+    let getSummaryFromContentText(contentText: HtmlNode): string =
+        let children = contentText.Descendants()
+        
+        ""
+            
+        
+    
     let fileLocation:string = fileLocationGettingFunc(summary.seasonNumber, summary.episodeNumber)
+    let html = HtmlDocument.Load(fileLocation)
+    let contentText = 
+        html.Descendants["div"]
+        |> Seq.filter (fun x -> x.HasAttribute("id", "mw-content-text"))
+        |> Seq.head
     
     Episode(summary, "", "")
 
