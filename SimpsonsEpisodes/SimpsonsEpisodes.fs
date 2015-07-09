@@ -135,8 +135,26 @@ type Episode(summaryInfo: EpisodeSummaryInfo, summary: string, plot: string) =
 
 let parseEpisodeFile (summary:EpisodeSummaryInfo, fileLocationGettingFunc): Episode =
     let getSummaryFromContentText(contentText: HtmlNode): string =
-        let children = contentText.Descendants()
-        
+        let children = 
+            contentText.Descendants()
+            |> Seq.toList
+        let add = ref false
+            
+        let f(acc, input: HtmlNode) = 
+            if input.Name() = "table" then
+                add.contents <- true
+                acc
+            else
+                if input.Name() = "div" then
+                    add.contents <- false
+                    acc
+                else
+                    if input.Name() = "p" && add.contents then
+                        input :: acc
+                    else
+                        acc
+        let res = Seq.fold f [] children
+                
         ""
             
         
