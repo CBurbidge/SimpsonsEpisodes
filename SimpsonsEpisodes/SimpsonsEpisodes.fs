@@ -136,37 +136,58 @@ type Episode(summaryInfo: EpisodeSummaryInfo, summary: string, plot: string) =
 let parseEpisodeFile (summary:EpisodeSummaryInfo, fileLocationGettingFunc): Episode =
     let getSummaryFromContentText(contentText: HtmlNode): string =
         let children = 
-            contentText.Descendants()
-            |> Seq.toList
-        let add = ref false
-            
-        let f(acc, input: HtmlNode) = 
-            if input.Name() = "table" then
-                add.contents <- true
-                acc
+            contentText.Elements()
+        let mutable add = false
+        let mutable pElements = []
+        for child in children do
+            if child.Name() = "table" then
+                add <- true
             else
-                if input.Name() = "div" then
-                    add.contents <- false
-                    acc
+                if child.Name() = "div" then
+                    add <- false
                 else
-                    if input.Name() = "p" && add.contents then
-                        input :: acc
-                    else
-                        acc
-        let res = Seq.fold f [] children
-                
-        ""
-            
-        
+                    if child.Name() = "p" && add then
+                        pElements <- child :: pElements
+        pElements 
+        |> List.map (fun x ->  x.InnerText() )
+        |> List.reduce (+)
     
+    let getPlotFromContentText(contentText: HtmlNode): string =
+        let children = 
+            contentText.Elements()
+        let mutable add = false
+        let mutable pElements = []
+        
+        for child in children do
+            if child.Name() = "h2" then
+                let mutable isPlot = false
+                let grandchildren = child.Elements()
+                for gChild in grandchildren do
+                    if gChild.HasId("Plot") then
+                        add <- true
+                    else
+                        if gChild.HasId("Development") then
+                            add <- false
+
+            else
+                if child.Name() = "p" && add then
+                        pElements <- child :: pElements
+        if add then
+            raise(Exception("this should not be true."))
+
+        pElements 
+        |> List.map (fun x ->  x.InnerText() )
+        |> List.reduce (+)
+
     let fileLocation:string = fileLocationGettingFunc(summary.seasonNumber, summary.episodeNumber)
     let html = HtmlDocument.Load(fileLocation)
     let contentText = 
         html.Descendants["div"]
         |> Seq.filter (fun x -> x.HasAttribute("id", "mw-content-text"))
         |> Seq.head
-    
-    Episode(summary, "", "")
+    let sum = getSummaryFromContentText contentText
+    let plot = getPlotFromContentText contentText
+    Episode(summary, sum, plot)
 
 
 
