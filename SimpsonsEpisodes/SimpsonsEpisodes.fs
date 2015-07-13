@@ -167,7 +167,7 @@ let parseEpisodeFile (summary:EpisodeSummaryInfo, fileLocationGettingFunc): Epis
                     if gChild.HasId("Plot") then
                         add <- true
                     else
-                        if gChild.HasId("Development") then
+                        if gChild.HasId("Development") || gChild.HasId("Production") then
                             add <- false
 
             else
