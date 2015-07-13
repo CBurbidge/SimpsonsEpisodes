@@ -10,8 +10,12 @@ let main argv =
     
     SimpsonsEpisodes.ensureThatEpisodeFilesExist allEpisodesSummaryInfos
     
+    SimpsonsEpisodes.fixOBrotherEpisode
+    
     let episodes = allEpisodesSummaryInfos
                    |> List.map  (fun x -> SimpsonsEpisodes.parseEpisodeFile(x, getEpisodeFileName))
     
+    Console.WriteLine("")
+    Console.WriteLine("Finished stuff")
     Console.ReadKey() |> ignore
     0 // return an integer exit code

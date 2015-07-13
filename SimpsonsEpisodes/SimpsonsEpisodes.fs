@@ -18,7 +18,7 @@ let wikiStart = "http://en.wikipedia.org"
 let episodeUrlStart = wikiStart + "/wiki/The_Simpsons_(season_"
 let currentNumberOfSeries = 26
 
-let forceDownload = true
+let forceDownload = false
 
 let getSeasonFileName = fun (seasonNumber: int) -> 
     Path.Combine( seasonsDataDirectory, "Season_" + seasonNumber.ToString() + ".html")
@@ -63,6 +63,20 @@ type EpisodeSummaryInfo(seasonNumber: int, episodeNumber:int, wikiUrlSuffix:stri
     member this.wikiUrlSuffix = wikiUrlSuffix
     member this.description = description
 
+let getEpisodeFileName (seriesNumber, episodeNumber) : string =
+    Path.Combine(episodesDataDirectory, "S" + seriesNumber.ToString() + "_E" + episodeNumber.ToString() + ".html")
+
+let fixOBrotherEpisode =
+    let oBrotherEpisodeUrl = "https://en.wikipedia.org/wiki/Oh_Brother,_Where_Art_Thou%3F"
+    let fileName = getEpisodeFileName(2, 15)
+    if File.Exists(fileName) = false || forceDownload || true then
+        let episodeHtml = HtmlDocument.Load(oBrotherEpisodeUrl)
+        File.WriteAllLines(fileName, [episodeHtml.ToString()])
+        Console.WriteLine("Downloaded to file: " + fileName)
+    else
+        Console.WriteLine("File exists at:" + fileName)
+    0
+
 let getAllEpisodes() :EpisodeSummaryInfo list = 
     let rec getSeasonEpisodesRec(seriesNumber: int, acc): EpisodeSummaryInfo list =
         let rec extractEpisodes(seasonNumber: int, numberOfEpisodes: int, infosAndDescriptionsList: List<HtmlNode>, acc: EpisodeSummaryInfo list): EpisodeSummaryInfo list =
@@ -78,9 +92,6 @@ let getAllEpisodes() :EpisodeSummaryInfo list =
                     |> Seq.head
 
                 let mutable episodeWikiHref = episodeWikiUrlAnchor.AttributeValue("href")
-                // Seems to be that one of the links is linking to a 
-//                if seasonNumber = 2 && numberOfEpisodes = 15 then
-//                    episodeWikiHref <- "/Oh_Brother,_Where_Art_Thou%3F"
                 
                 let descriptionRowElement = infosAndDescriptionsList.[numberOfEpisodes * 2 - 1]
                 let descriptionElement = descriptionRowElement.Descendants("td") |> Seq.head
@@ -112,9 +123,6 @@ let getAllEpisodes() :EpisodeSummaryInfo list =
                 
     getSeasonEpisodesRec(currentNumberOfSeries, [])
 
-let getEpisodeFileName (seriesNumber, episodeNumber) : string =
-    Path.Combine(episodesDataDirectory, "S" + seriesNumber.ToString() + "_E" + episodeNumber.ToString() + ".html")
-
 let ensureThatEpisodeFilesExist (allEpisodes: EpisodeSummaryInfo list) = 
     if Directory.Exists(episodesDataDirectory) = false then
         Directory.CreateDirectory(episodesDataDirectory) |> ignore
@@ -142,16 +150,22 @@ let parseEpisodeFile (summary:EpisodeSummaryInfo, fileLocationGettingFunc): Epis
         let children = 
             contentText.Elements()
         let mutable add = false
+        let mutable hasBeenP = false
         let mutable pElements = []
         for child in children do
             if child.Name() = "table" then
                 add <- true
             else
-                if child.Name() = "div" then
+                if child.Name() = "div" && hasBeenP = true then
                     add <- false
                 else
-                    if child.Name() = "p" && add then
-                        pElements <- child :: pElements
+                    if child.Name() = "p" then 
+                        hasBeenP <- true
+                        if add then
+                            pElements <- child :: pElements
+        if hasBeenP = false then
+            raise( Exception("Should have been a p element"))
+
         pElements 
         |> List.rev
         |> List.map (fun x ->  x.InnerText() )
@@ -171,12 +185,26 @@ let parseEpisodeFile (summary:EpisodeSummaryInfo, fileLocationGettingFunc): Epis
                     if gChild.HasId("Plot") then
                         add <- true
                     else
-                        if gChild.HasId("Development") || gChild.HasId("Production") then
+                        if gChild.HasId("Development") 
+                        || gChild.HasId("Production") 
+                        || gChild.HasId("Controversy") 
+                        || gChild.HasId("Reception") 
+                        || gChild.HasId("References") 
+                        || gChild.HasId("Background") 
+                        || gChild.HasId("External_links") 
+                        || gChild.HasId("Production_and_allusions") 
+                        || gChild.HasId("Production_and_analysis") 
+                        || gChild.HasId("Production_and_cultural_references") 
+                        || gChild.HasId("Production_and_themes") 
+                        || gChild.HasId("Cultural_references") then
                             add <- false
-
             else
                 if child.Name() = "p" && add then
-                        pElements <- child :: pElements
+                    pElements <- child :: pElements
+                else
+                    if child.Name() = "table" && child.HasClass("mbox-small plainlinks sistersitebox") then
+                        add <- false
+                        //|| gChild.HasClass("mbox-small plainlinks sistersitebox")
         if add then
             raise(Exception("this should not be true."))
 
@@ -184,7 +212,9 @@ let parseEpisodeFile (summary:EpisodeSummaryInfo, fileLocationGettingFunc): Epis
         |> List.rev
         |> List.map (fun x ->  x.InnerText() )
         |> List.reduce (+)
-
+    if summary.seasonNumber = 13 && summary.episodeNumber = 15 then
+        0 |> ignore
+    
     let fileLocation:string = fileLocationGettingFunc(summary.seasonNumber, summary.episodeNumber)
     let html = HtmlDocument.Load(fileLocation)
     let contentText = 
