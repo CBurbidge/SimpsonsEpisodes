@@ -149,6 +149,7 @@ let parseEpisodeFile (summary:EpisodeSummaryInfo, fileLocationGettingFunc): Epis
                     if child.Name() = "p" && add then
                         pElements <- child :: pElements
         pElements 
+        |> List.rev
         |> List.map (fun x ->  x.InnerText() )
         |> List.reduce (+)
     
@@ -176,6 +177,7 @@ let parseEpisodeFile (summary:EpisodeSummaryInfo, fileLocationGettingFunc): Epis
             raise(Exception("this should not be true."))
 
         pElements 
+        |> List.rev
         |> List.map (fun x ->  x.InnerText() )
         |> List.reduce (+)
 

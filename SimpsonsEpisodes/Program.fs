@@ -6,11 +6,12 @@ let main argv =
     
     SimpsonsEpisodes.downloadSeasonFilesToDisk
     
-    let allEpisodes: EpisodeSummaryInfo list = SimpsonsEpisodes.getAllEpisodes()
+    let allEpisodesSummaryInfos: EpisodeSummaryInfo list = SimpsonsEpisodes.getAllEpisodes()
     
-    SimpsonsEpisodes.ensureThatEpisodeFilesExist allEpisodes
-    for episode in allEpisodes do
-        let episodeModel = SimpsonsEpisodes.parseEpisodeFile(episode, getEpisodeFileName)
-        0 |> ignore
+    SimpsonsEpisodes.ensureThatEpisodeFilesExist allEpisodesSummaryInfos
+    
+    let episodes = allEpisodesSummaryInfos
+                   |> List.map  (fun x -> SimpsonsEpisodes.parseEpisodeFile(x, getEpisodeFileName))
+    
     Console.ReadKey() |> ignore
     0 // return an integer exit code
