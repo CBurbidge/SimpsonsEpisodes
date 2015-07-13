@@ -18,7 +18,7 @@ let wikiStart = "http://en.wikipedia.org"
 let episodeUrlStart = wikiStart + "/wiki/The_Simpsons_(season_"
 let currentNumberOfSeries = 26
 
-let forceDownload = false
+let forceDownload = true
 
 let getSeasonFileName = fun (seasonNumber: int) -> 
     Path.Combine( seasonsDataDirectory, "Season_" + seasonNumber.ToString() + ".html")
@@ -76,8 +76,12 @@ let getAllEpisodes() :EpisodeSummaryInfo list =
                 let episodeWikiUrlAnchor = 
                     infoElement.Elements().[2].Descendants["a"]
                     |> Seq.head
-                let episodeWikiHref = episodeWikiUrlAnchor.AttributeValue("href")
-            
+
+                let mutable episodeWikiHref = episodeWikiUrlAnchor.AttributeValue("href")
+                // Seems to be that one of the links is linking to a 
+//                if seasonNumber = 2 && numberOfEpisodes = 15 then
+//                    episodeWikiHref <- "/Oh_Brother,_Where_Art_Thou%3F"
+                
                 let descriptionRowElement = infosAndDescriptionsList.[numberOfEpisodes * 2 - 1]
                 let descriptionElement = descriptionRowElement.Descendants("td") |> Seq.head
                 if descriptionElement.HasAttribute("class", "description") = false then
