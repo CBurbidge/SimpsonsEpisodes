@@ -1,19 +1,10 @@
-﻿open SimpsonsEpisodes
+﻿open SimpsonsEpisodesParser
 open System
 
 [<EntryPoint>]
 let main argv = 
     
-    SimpsonsEpisodes.downloadSeasonFilesToDisk
-    
-    let allEpisodesSummaryInfos: EpisodeSummaryInfo list = SimpsonsEpisodes.getAllEpisodes()
-    
-    SimpsonsEpisodes.ensureThatEpisodeFilesExist allEpisodesSummaryInfos
-    
-    SimpsonsEpisodes.fixOBrotherEpisode
-    
-    let episodes = allEpisodesSummaryInfos
-                   |> List.map  (fun x -> SimpsonsEpisodes.parseEpisodeFile(x, getEpisodeFileName))
+    let episodes = SimpsonsEpisodesParser.getEpisodes
     
     Console.WriteLine("")
     Console.WriteLine("Finished stuff")

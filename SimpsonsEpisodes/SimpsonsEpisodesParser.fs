@@ -1,4 +1,4 @@
-﻿module SimpsonsEpisodes
+﻿module SimpsonsEpisodesParser
 
 open System
 open System.IO
@@ -204,7 +204,6 @@ let parseEpisodeFile (summary:EpisodeSummaryInfo, fileLocationGettingFunc): Epis
                 else
                     if child.Name() = "table" && child.HasClass("mbox-small plainlinks sistersitebox") then
                         add <- false
-                        //|| gChild.HasClass("mbox-small plainlinks sistersitebox")
         if add then
             raise(Exception("this should not be true."))
 
@@ -225,6 +224,14 @@ let parseEpisodeFile (summary:EpisodeSummaryInfo, fileLocationGettingFunc): Epis
     let plot = getPlotFromContentText contentText
     Episode(summary, sum, plot)
 
-
-
+let getEpisodes =
+    downloadSeasonFilesToDisk
     
+    let allEpisodesSummaryInfos: EpisodeSummaryInfo list = getAllEpisodes()
+    
+    ensureThatEpisodeFilesExist allEpisodesSummaryInfos
+    
+    fixOBrotherEpisode |> ignore
+    
+    allEpisodesSummaryInfos
+        |> List.map  (fun x -> parseEpisodeFile(x, getEpisodeFileName))
