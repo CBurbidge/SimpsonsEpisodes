@@ -1,10 +1,10 @@
-﻿open SimpsonsEpisodesParser
+﻿open SimpsonsEpisodes.Parser
 open System
 
 [<EntryPoint>]
 let main argv = 
     
-    let episodes = SimpsonsEpisodesParser.getEpisodes
+    let episodes = SimpsonsEpisodes.Parser.getEpisodes
     
     Console.WriteLine("")
     Console.WriteLine("Finished stuff")

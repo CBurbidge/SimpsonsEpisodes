@@ -2,9 +2,9 @@
 
 open System.IO
 open NUnit.Framework
-open SimpsonsEpisodesParser
+open SimpsonsEpisodes.Parser
 
-let testDataDir = Path.Combine(SimpsonsEpisodesParser.dataDirectory, "TestData")
+let testDataDir = Path.Combine(SimpsonsEpisodes.Parser.dataDirectory, "TestData")
 
 [<TestFixture>]
 type EpisodeParsingTests() = 
@@ -15,9 +15,9 @@ type EpisodeParsingTests() =
             Path.Combine(testDataDir, "BasicParsingTest.html")
         let fakeSeasonNumber = 0
         let fakeEpisodeNumber = 0
-        let fakeSummary = SimpsonsEpisodesParser.EpisodeSummaryInfo(fakeSeasonNumber, fakeEpisodeNumber, "", "")
+        let fakeSummary = SimpsonsEpisodes.Parser.EpisodeSummaryInfo(fakeSeasonNumber, fakeEpisodeNumber, "", "")
         
-        let result = SimpsonsEpisodesParser.parseEpisodeFile(fakeSummary, fakeFileFunc)
+        let result = SimpsonsEpisodes.Parser.parseEpisodeFile(fakeSummary, fakeFileFunc)
         Assert.That(result.summary, Is.EqualTo("This is a test to get the summary"))
     
     [<Test>]
@@ -26,7 +26,7 @@ type EpisodeParsingTests() =
             Path.Combine(testDataDir, "BasicParsingTest.html")
         let fakeSeasonNumber = 0
         let fakeEpisodeNumber = 0
-        let fakeSummary = SimpsonsEpisodesParser.EpisodeSummaryInfo(fakeSeasonNumber, fakeEpisodeNumber, "", "")
+        let fakeSummary = SimpsonsEpisodes.Parser.EpisodeSummaryInfo(fakeSeasonNumber, fakeEpisodeNumber, "", "")
         
-        let result = SimpsonsEpisodesParser.parseEpisodeFile(fakeSummary, fakeFileFunc)
+        let result = SimpsonsEpisodes.Parser.parseEpisodeFile(fakeSummary, fakeFileFunc)
         Assert.That(result.summary, Is.EqualTo("This is a test to get the plot with only one p tag"))

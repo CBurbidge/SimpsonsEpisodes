@@ -1,4 +1,4 @@
-﻿module SimpsonsEpisodesParser
+﻿module SimpsonsEpisodes.Parser
 
 open System
 open System.IO
