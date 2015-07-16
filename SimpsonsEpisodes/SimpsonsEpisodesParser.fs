@@ -3,6 +3,7 @@
 open System
 open System.IO
 open System.Web
+open System.Text.RegularExpressions
 open FSharp.Configuration
 open FSharp.Data
 
@@ -77,6 +78,10 @@ let fixOBrotherEpisode =
         Console.WriteLine("File exists at:" + fileName)
     0
 
+let removeWikipediaWeirdText(innerText: string):string =
+    let output = Regex.Replace(innerText, "\[\d+\]", "")
+    output
+
 let getAllEpisodes() :EpisodeSummaryInfo list = 
     let rec getSeasonEpisodesRec(seriesNumber: int, acc): EpisodeSummaryInfo list =
         let rec extractEpisodes(seasonNumber: int, numberOfEpisodes: int, infosAndDescriptionsList: List<HtmlNode>, acc: EpisodeSummaryInfo list): EpisodeSummaryInfo list =
@@ -97,11 +102,11 @@ let getAllEpisodes() :EpisodeSummaryInfo list =
                 let descriptionElement = descriptionRowElement.Descendants("td") |> Seq.head
                 if descriptionElement.HasAttribute("class", "description") = false then
                     raise(Exception("This is not a description row when it should be!"))
-                let descText = descriptionElement.InnerText
-                let descString = descriptionElement.ToString()
+                let descText = removeWikipediaWeirdText(descriptionElement.InnerText())
+                let episodeSummaryInfo = EpisodeSummaryInfo(seasonNumber, numberOfEpisodes, episodeWikiHref, descText)
                         
                 let oneLessThanInput = numberOfEpisodes - 1
-                extractEpisodes(seasonNumber, oneLessThanInput, infosAndDescriptionsList, (EpisodeSummaryInfo(seasonNumber, numberOfEpisodes, episodeWikiHref, descString) :: acc))
+                extractEpisodes(seasonNumber, oneLessThanInput, infosAndDescriptionsList, (episodeSummaryInfo :: acc))
         if seriesNumber = 0 then
             acc
         else 
@@ -145,6 +150,8 @@ type Episode(summaryInfo: EpisodeSummaryInfo, summary: string, plot: string) =
     member this.summary = summary
     member this.plot = plot
 
+
+
 let parseEpisodeFile (summary:EpisodeSummaryInfo, fileLocationGettingFunc): Episode =
     let getSummaryFromContentText(contentText: HtmlNode): string =
         let children = 
@@ -168,7 +175,7 @@ let parseEpisodeFile (summary:EpisodeSummaryInfo, fileLocationGettingFunc): Epis
 
         pElements 
         |> List.rev
-        |> List.map (fun x ->  x.InnerText() )
+        |> List.map (fun x ->  removeWikipediaWeirdText(x.InnerText()) )
         |> List.reduce (+)
     
     let getPlotFromContentText(contentText: HtmlNode): string =
@@ -209,7 +216,7 @@ let parseEpisodeFile (summary:EpisodeSummaryInfo, fileLocationGettingFunc): Epis
 
         pElements 
         |> List.rev
-        |> List.map (fun x ->  x.InnerText() )
+        |> List.map (fun x ->  removeWikipediaWeirdText(x.InnerText()) )
         |> List.reduce (+)
     if summary.seasonNumber = 13 && summary.episodeNumber = 15 then
         0 |> ignore

@@ -22,8 +22,26 @@ type SimpsonsSeason(seasonNumber: int, episodes: SimpsonsEpisode list) =
 type SimpsonsFilmography(seasons: SimpsonsSeason list) =
     member this.seasons = seasons
 
-let getFilmography(allEpisodes: Episode list) =
-    let simpsonsEpisodes = episodes
-                           |> List.map (fun ep -> 
-                           ep
-                           )
+let getFilmography(allEpisodes: Episode list): SimpsonsFilmography =
+    
+    let simpsonsEpisodes = allEpisodes
+                          |> List.map (fun (x:Episode) -> 
+                          SimpsonsEpisode(x.summaryInfo.seasonNumber,
+                              x.summaryInfo.episodeNumber,
+                              x.summaryInfo.description,
+                              x.summary, x.plot)
+                          )
+    let seasonNumbers = simpsonsEpisodes
+                        |> List.map (fun x -> x.seasonNumber)
+                        |> Seq.distinct
+
+    let seasons =  seasonNumbers 
+                |> Seq.map (fun seasonNumber ->
+                    let episodes = simpsonsEpisodes
+                                    |> List.filter (fun episode -> 
+                                        episode.seasonNumber = seasonNumber
+                                    )
+                    SimpsonsSeason(seasonNumber, episodes)
+                )
+    let film = SimpsonsFilmography(Seq.toList (seasons))
+    film
