@@ -5,7 +5,7 @@ open System
 let main argv = 
     
     let episodes = SimpsonsEpisodes.Parser.getEpisodes
-    let filmography = SimpsonsEpisodes.Aggregator.getFilmography episodes
+    let results = SimpsonsEpisodes.Analyser.analyseEpisodes episodes
     
     Console.WriteLine("")
     Console.WriteLine("Finished stuff")
