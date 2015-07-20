@@ -23,7 +23,11 @@ type Result(combinedText:string) =
         let ratio = (decimal)countOfName / (decimal)totalWords
         WordFrequency(name, ratio)
 
+    member this.Maggie = getNameFromText("maggie", combinedText)
+    member this.Lisa = getNameFromText("lisa", combinedText)
     member this.Bart = getNameFromText("bart", combinedText)
+    member this.Marge = getNameFromText("marge", combinedText)
+    member this.Homer = getNameFromText("homer", combinedText)
 
 /// The description comes from the season page description of the episode and the summary and plot come from each individual episode page.
 type SimpsonsEpisode(seasonNumber: int, episodeNumber:int, description:string, summary: string, plot: string) =
