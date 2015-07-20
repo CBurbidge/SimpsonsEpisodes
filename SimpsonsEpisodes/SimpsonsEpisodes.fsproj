@@ -40,6 +40,10 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="DynamicInterop">
+      <HintPath>..\packages\DynamicInterop.0.7.4\lib\net40\DynamicInterop.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="FSharp.Configuration">
       <HintPath>..\packages\FSharp.Configuration.0.5.1\lib\net40\FSharp.Configuration.dll</HintPath>
       <Private>True</Private>
@@ -56,6 +60,26 @@
       <HintPath>..\packages\NUnit.2.6.4\lib\nunit.framework.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="RDotNet">
+      <HintPath>..\packages\R.NET.Community.1.6.4\lib\net40\RDotNet.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="RDotNet.FSharp">
+      <HintPath>..\packages\R.NET.Community.FSharp.1.6.4\lib\net40\RDotNet.FSharp.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="RDotNet.NativeLibrary">
+      <HintPath>..\packages\R.NET.Community.1.6.4\lib\net40\RDotNet.NativeLibrary.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="RProvider">
+      <HintPath>..\packages\RProvider.1.1.13\lib\net40\RProvider.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="RProvider.Runtime">
+      <HintPath>..\packages\RProvider.1.1.13\lib\net40\RProvider.Runtime.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="SharpYaml">
       <HintPath>..\packages\FSharp.Configuration.0.5.1\lib\net40\SharpYaml.dll</HintPath>
       <Private>True</Private>
@@ -69,6 +93,7 @@
   <ItemGroup>
     <Compile Include="Parser.fs" />
     <Compile Include="Analyser.fs" />
+    <Compile Include="Plotter.fs" />
     <None Include="App.config" />
     <None Include="packages.config" />
     <Compile Include="EpisodeParsingTests.fs" />
