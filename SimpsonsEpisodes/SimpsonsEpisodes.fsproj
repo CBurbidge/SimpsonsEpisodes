@@ -96,7 +96,7 @@
     <Compile Include="Plotter.fs" />
     <None Include="App.config" />
     <None Include="packages.config" />
-    <Compile Include="EpisodeParsingTests.fs" />
+    <Compile Include="ParserTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <PropertyGroup>

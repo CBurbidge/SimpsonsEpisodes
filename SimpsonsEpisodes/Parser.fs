@@ -150,74 +150,75 @@ type Episode(summaryInfo: EpisodeSummaryInfo, summary: string, plot: string) =
     member this.summary = summary
     member this.plot = plot
 
+let getSummaryFromContentText(contentText: HtmlNode): string =
+    let children = 
+        contentText.Elements()
+    let thing = contentText.ToString()
+    let mutable add = false
+    let mutable hasBeenP = false
+    let mutable pElements = []
+    for child in children do
+        if child.Name() = "table" then
+            add <- true
+        else
+            if child.Name() = "div" && hasBeenP = true then
+                add <- false
+            else
+                if child.Name() = "p" then 
+                    hasBeenP <- true
+                    if add then
+                        pElements <- child :: pElements
+    if hasBeenP = false then
+        raise( Exception("Should have been a p element"))
 
+    pElements 
+    |> List.rev
+    |> List.map (fun x ->  removeWikipediaWeirdText(x.InnerText()) )
+    |> List.reduce (+)
+    
+let getPlotFromContentText(contentText: HtmlNode): string =
+    let children = 
+        contentText.Elements()
+    let mutable add = false
+    let mutable pElements = []
+        
+    for child in children do
+        if child.Name() = "h2" then
+            let mutable isPlot = false
+            let grandchildren = child.Elements()
+            for gChild in grandchildren do
+                if gChild.HasId("Plot") then
+                    add <- true
+                else
+                    if gChild.HasId("Development") 
+                    || gChild.HasId("Production") 
+                    || gChild.HasId("Controversy") 
+                    || gChild.HasId("Reception") 
+                    || gChild.HasId("References") 
+                    || gChild.HasId("Background") 
+                    || gChild.HasId("External_links") 
+                    || gChild.HasId("Production_and_allusions") 
+                    || gChild.HasId("Production_and_analysis") 
+                    || gChild.HasId("Production_and_cultural_references") 
+                    || gChild.HasId("Production_and_themes") 
+                    || gChild.HasId("Cultural_references") then
+                        add <- false
+        else
+            if child.Name() = "p" && add then
+                pElements <- child :: pElements
+            else
+                if child.Name() = "table" && child.HasClass("mbox-small plainlinks sistersitebox") then
+                    add <- false
+    if add then
+        raise(Exception("this should not be true."))
+
+    pElements 
+    |> List.rev
+    |> List.map (fun x ->  removeWikipediaWeirdText(x.InnerText()) )
+    |> List.reduce (+)
 
 let parseEpisodeFile (summary:EpisodeSummaryInfo, fileLocationGettingFunc): Episode =
-    let getSummaryFromContentText(contentText: HtmlNode): string =
-        let children = 
-            contentText.Elements()
-        let mutable add = false
-        let mutable hasBeenP = false
-        let mutable pElements = []
-        for child in children do
-            if child.Name() = "table" then
-                add <- true
-            else
-                if child.Name() = "div" && hasBeenP = true then
-                    add <- false
-                else
-                    if child.Name() = "p" then 
-                        hasBeenP <- true
-                        if add then
-                            pElements <- child :: pElements
-        if hasBeenP = false then
-            raise( Exception("Should have been a p element"))
-
-        pElements 
-        |> List.rev
-        |> List.map (fun x ->  removeWikipediaWeirdText(x.InnerText()) )
-        |> List.reduce (+)
     
-    let getPlotFromContentText(contentText: HtmlNode): string =
-        let children = 
-            contentText.Elements()
-        let mutable add = false
-        let mutable pElements = []
-        
-        for child in children do
-            if child.Name() = "h2" then
-                let mutable isPlot = false
-                let grandchildren = child.Elements()
-                for gChild in grandchildren do
-                    if gChild.HasId("Plot") then
-                        add <- true
-                    else
-                        if gChild.HasId("Development") 
-                        || gChild.HasId("Production") 
-                        || gChild.HasId("Controversy") 
-                        || gChild.HasId("Reception") 
-                        || gChild.HasId("References") 
-                        || gChild.HasId("Background") 
-                        || gChild.HasId("External_links") 
-                        || gChild.HasId("Production_and_allusions") 
-                        || gChild.HasId("Production_and_analysis") 
-                        || gChild.HasId("Production_and_cultural_references") 
-                        || gChild.HasId("Production_and_themes") 
-                        || gChild.HasId("Cultural_references") then
-                            add <- false
-            else
-                if child.Name() = "p" && add then
-                    pElements <- child :: pElements
-                else
-                    if child.Name() = "table" && child.HasClass("mbox-small plainlinks sistersitebox") then
-                        add <- false
-        if add then
-            raise(Exception("this should not be true."))
-
-        pElements 
-        |> List.rev
-        |> List.map (fun x ->  removeWikipediaWeirdText(x.InnerText()) )
-        |> List.reduce (+)
     if summary.seasonNumber = 13 && summary.episodeNumber = 15 then
         0 |> ignore
     
