@@ -9,7 +9,7 @@ open WebSharper.D3
 module Client =
 
     let Main () =
-        let canvas = Canvas[Id "canvas"]
+        let canvas = D3.
         let d3Canvas = D3.Select("#canvas")
         Div [
             canvas
